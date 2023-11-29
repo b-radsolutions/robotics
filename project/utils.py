@@ -14,7 +14,7 @@ def get_homogeneous(R, T):
             - - -   - 
             0 0 0   1
     """
-    return np.vstack(np.column_stack(R, T), np.array([0, 0, 0, 1]))
+    return np.vstack((np.concatenate((R, T), axis=1), np.array([0, 0, 0, 1])))
 
 
 def vec_to_so3(V):
@@ -25,7 +25,7 @@ def vec_to_so3(V):
                      [-V[1],  V[0],     0]])
 
 
-def rodrigues_rotation(axis, theta):
+def euler_rodrigues(axis, angle):
     """Returns a 3x3 matrix that represents a rotation 
     around the axis by theta
     Args: 
@@ -33,11 +33,18 @@ def rodrigues_rotation(axis, theta):
         theta: angle of rotation
 
     """
-    axis = axis/np.linalg.norm(axis)
-    axis_cross = vec_to_so3(axis)
+    # Normalize the axis
+    axis = (axis) / np.linalg.norm(axis)
     
-    # Rodrigues' Formula
-    R = np.eye(3) * np.cos(theta) + np.sin(theta) * axis_cross + (1 - np.cos(theta)) * np.outer(axis, axis)
-    return R
+    # Compute the necessary components
+    a = np.cos(angle / 2.0)
+    b, c, d = -axis * np.sin(angle / 2.0)
+    
+    # Compute the rotation matrix
+    rotation_matrix = np.array([[a**2 + b**2 - c**2 - d**2, 2 * (b*c - a*d), 2 * (b*d + a*c)],
+                                [2 * (b*c + a*d), a**2 + c**2 - b**2 - d**2, 2 * (c*d - a*b)],
+                                [2 * (b*d - a*c), 2 * (c*d + a*b), a**2 + d**2 - b**2 - c**2]])
+    
+    return rotation_matrix
 
 
