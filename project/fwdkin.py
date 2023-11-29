@@ -1,29 +1,25 @@
 import numpy as np
-from utils import rodrigues_rotation, get_homogeneous
-from Robot import Arm
+from utils import euler_rodrigues, get_homogeneous
+from Robot import UR5Arm
 
-def fwdkin(Arm, hlist, qlist):
+def fwdkin(arm: UR5Arm, theta: np.array)->tuple():
     """Calculates the forward kinematics of the DofBot
     Args:
-        Arm - Robot arm class with home config info and joint value
-        hlist - the axes of rotation for each joint
-        qlist - the angles of rotation for each joint
+        arm - Robot arm class with home config info and joint value
+        theta - the angles of rotation for each joint
     Returns:
         End effector matrix (4x4) 
-               
     """
-    P = Arm.get_P()
-    T = np.array(Arm.get_home_config())
-    assert(len(hlist) == len(qlist), 
-           "Number of joint axes and number of joints don't match")
-
+    P = arm.get_P()
+    H = arm.get_H()
+    
     R_0T = np.eye(3)
     P_0T = P[:,-1]
-    for i in range(len(hlist)-1, -1, -1):
-        R_ij = rodrigues_rotation(hlist[:,i] * qlist[i])
+    
+    for i in range(np.shape(H)[1]-1, -1, -1):
+        R_ij = euler_rodrigues(H[:,i],theta[i])
         # R_01 @ R_12 @ R_23 @ R_34 @ R_45
         R_0T = R_ij @ R_0T
         P_0T = P[:,i] + R_ij @ P_0T
 
-    return T @ get_homogeneous(R_0T, P_0T)
-
+    return get_homogeneous(R_0T, P_0T.reshape(3,1))
