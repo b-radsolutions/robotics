@@ -93,3 +93,12 @@ def R2rot(R):
 
     k = invhat(R1) / (2.0 * sin_theta)
     return k, theta
+
+def R2rpy(R):
+    assert np.linalg.norm(R[0:2,0]) > np.finfo(float).eps * 10.0, "Singular rpy requested"
+    
+    r=np.arctan2(R[2,1],R[2,2])
+    y=np.arctan2(R[1,0], R[0,0])
+    p=np.arctan2(-R[2,0], np.linalg.norm(R[2,1:3]))
+        
+    return (r,p,y)    
