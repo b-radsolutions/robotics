@@ -1,6 +1,6 @@
 import numpy as np
 import utils
-from utils import vec_to_so3, euler_rodrigues 
+from utils import rot, hat
 
 class UR5Arm:
     def __init__(self, P, H, limits=None):
@@ -45,20 +45,17 @@ class UR5Arm:
         P = self.P
         H = self.H
         R = np.eye(3)
-        PiT = np.zeros((3,5))
+        PiT = np.zeros((3,6))
         PiT[:,-1] = P[:,-1]
-        for i in range(len(joint_angles)-2, -1, -1):
-            print(joint_angles)
-            R = R @ euler_rodrigues(H[:,i], joint_angles[i])
-            PiT[:,i] = P[:,i] + R @ PiT[:,i+1]
+        for i in range(5, 0, -1):
+            R = R @ rot(H[:,i-1], joint_angles[i-1])
+            PiT[:,i] = P[:,i] + R @ PiT[:,i]
         return PiT
         
     def jacobian(self, jt)->np.array:
         """Returns the jacobian of this robot arm with joint angles
         """
-        joint_angles = jt
-        if joint_angles.shape == (5,1):
-            joint_angles = np.squeeze(jt.T)
+        joint_angles = np.squeeze(jt.reshape(1,5))
         # assert (len(joint_angles) == self.H.shape[1], 
                 # "number of joint angles is greater than number of non-end-effector joint")
         # The Jacobian is defined as 
@@ -76,13 +73,10 @@ class UR5Arm:
         R = np.eye(3)
         for i in range(len(joint_angles)):
             dw = R @ H[:, i]
-            print(joint_angles)
-            R = R @ euler_rodrigues(H[:, i], joint_angles[i])
-            print(vec_to_so3(dw).shape, R.shape, PiT[:,i].shape)
-            dv = vec_to_so3(dw) @ R @ PiT[:,i]
+            R = R @ rot(H[:, i], joint_angles[i])
+            # print(R)
+            dv = hat(dw) @ R @ PiT[:,i+1]
             J[:,i] = np.concatenate((dw.T, dv.T), axis=0).T
-            print(np.concatenate((dw.T, dv.T), axis=0).T)
-        print(J)
         return J
         
             
