@@ -1,6 +1,7 @@
 import numpy as np
 import utils
-from utils import vec_to_so3, euler_rodrigues 
+from utils import vec_to_so3, euler_rodrigues
+
 
 class UR5Arm:
     def __init__(self, P, H, limits=None):
@@ -28,7 +29,7 @@ class UR5Arm:
         """
         return self.H
 
-    def get_Limits(self)->list:
+    def get_Limits(self) -> list:
         """Returns the joint limits in a list of tuples length: 6 (including gripper)
         """
         return self.L
@@ -38,29 +39,29 @@ class UR5Arm:
         joint (i) in the ith frame
         """
         joint_angles = jt
-        if joint_angles.shape == (5,1):
+        if joint_angles.shape == (5, 1):
             joint_angles = jt.T
-       
+
         # assert(joint_angles.shape == (1,5))
         P = self.P
         H = self.H
         R = np.eye(3)
-        PiT = np.zeros((3,5))
-        PiT[:,-1] = P[:,-1]
-        for i in range(len(joint_angles)-2, -1, -1):
+        PiT = np.zeros((3, 5))
+        PiT[:, -1] = P[:, -1]
+        for i in range(len(joint_angles) - 2, -1, -1):
             print(joint_angles)
-            R = R @ euler_rodrigues(H[:,i], joint_angles[i])
-            PiT[:,i] = P[:,i] + R @ PiT[:,i+1]
+            R = R @ euler_rodrigues(H[:, i], joint_angles[i])
+            PiT[:, i] = P[:, i] + R @ PiT[:, i + 1]
         return PiT
-        
-    def jacobian(self, jt)->np.array:
+
+    def jacobian(self, jt) -> np.array:
         """Returns the jacobian of this robot arm with joint angles
         """
         joint_angles = jt
-        if joint_angles.shape == (5,1):
+        if joint_angles.shape == (5, 1):
             joint_angles = np.squeeze(jt.T)
         # assert (len(joint_angles) == self.H.shape[1], 
-                # "number of joint angles is greater than number of non-end-effector joint")
+        # "number of joint angles is greater than number of non-end-effector joint")
         # The Jacobian is defined as 
         """ 
         # J = [[ h_1,        h_1 x R01 @ P1T                ] 
@@ -70,7 +71,7 @@ class UR5Arm:
         #      [ .                                          ]
         #      [ R0,N-1 @ h_N,  (R0,N-1 @ h_N) x R0,N @ PNT,]].T
         """
-        J = np.zeros((6,5))
+        J = np.zeros((6, 5))
         PiT = self.get_PiT(joint_angles)
         H = self.H
         R = np.eye(3)
@@ -78,14 +79,9 @@ class UR5Arm:
             dw = R @ H[:, i]
             print(joint_angles)
             R = R @ euler_rodrigues(H[:, i], joint_angles[i])
-            print(vec_to_so3(dw).shape, R.shape, PiT[:,i].shape)
-            dv = vec_to_so3(dw) @ R @ PiT[:,i]
-            J[:,i] = np.concatenate((dw.T, dv.T), axis=0).T
+            print(vec_to_so3(dw).shape, R.shape, PiT[:, i].shape)
+            dv = vec_to_so3(dw) @ R @ PiT[:, i]
+            J[:, i] = np.concatenate((dw.T, dv.T), axis=0).T
             print(np.concatenate((dw.T, dv.T), axis=0).T)
         print(J)
         return J
-        
-            
-            
-            
-            
