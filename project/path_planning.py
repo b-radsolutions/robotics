@@ -33,6 +33,17 @@ def generate_joint_space_path(start_angles, end_angles, steps):
     return np.transpose(path)
 
 
+# Step 2: Command the arm to follow the path
+def command_arm_to_follow_path(robot, path, s_time):
+    for joint_angles in path:
+        # Convert angles from radians to degrees for the robot's actuators
+        angles_in_degrees = joint_angles * (180 / np.pi)
+        # Assuming Arm_Device is instantiated and the function Arm_serial_servo_write6 is available
+        # to send the joint angles to the robot. Replace 'Arm_Device' with your actual object.
+        robot.Arm_serial_servo_write6(angles_in_degrees[0], angles_in_degrees[1], angles_in_degrees[2], angles_in_degrees[3], angles_in_degrees[4], 90, s_time)
+        time.sleep(0.1)  # Wait for some time interval before sending the next set of angles
+
+
 def command_arm_to_follow_path_with_feedback(robot, path, s_time, pid_controllers, gripper):
     for joint_angles in path:
         actual_joint_angles = measure_actual_position(robot)
@@ -74,24 +85,6 @@ def evaluate_path_following_error(robot, desired_path):
         error = np.array(desired_joint_angles) - np.array(actual_joint_angles)
         error_path.append(error)
     return error_path
-
-
-def rotation_matrix_z(theta):
-    return np.array([[np.cos(theta), -np.sin(theta), 0],
-                     [np.sin(theta), np.cos(theta), 0],
-                     [0, 0, 1]])
-
-
-def rotation_matrix_y(theta):
-    return np.array([[np.cos(theta), 0, np.sin(theta)],
-                     [0, 1, 0],
-                     [-np.sin(theta), 0, np.cos(theta)]])
-
-
-def rotation_matrix_x(theta):
-    return np.array([[1, 0, 0],
-                     [0, np.cos(theta), -np.sin(theta)],
-                     [0, np.sin(theta), np.cos(theta)]])
 
 
 def path_planner(robot, N, q_0, q_dest, k_p, k_i, k_d, gripper, s_time):
