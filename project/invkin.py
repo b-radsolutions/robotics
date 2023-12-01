@@ -23,10 +23,9 @@ def invkin(arm: UR5Arm, Rd, Pd, q0, max_iters=2000, alpha=0.1, tol = 1e-4):
     while iter < max_iters and not converged.all():
 
         # get the homogenous transform of current q
-        H = fwdkin(arm, q_cur)
+        R_cur, P_cur = fwdkin(arm, q_cur)
         # get the postion and Orientation
-        R_cur = H[0:3, 0:3]
-        P_cur = H[:3, 3]
+
         if iter == 0: print(R_cur, P_cur)
 
         

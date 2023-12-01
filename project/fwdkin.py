@@ -21,5 +21,6 @@ def fwdkin(arm: UR5Arm, theta: np.array)->tuple():
         
         R_0T = R_0T @ R_ij
         P_0T = P_0T + R_0T @ P[:,i]
+    H = get_homogeneous(R_0T, P_0T.reshape(3,1))
 
-    return get_homogeneous(R_0T, P_0T.reshape(3,1))
+    return H[0:3, 0:3], H[:3, 3]
