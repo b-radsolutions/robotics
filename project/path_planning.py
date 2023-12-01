@@ -2,6 +2,7 @@ from project.utils import *
 from project.Robot import UR5Arm
 import numpy as np
 import time
+from invkin import invkin
 
 
 class PIDController:
@@ -40,7 +41,8 @@ def command_arm_to_follow_path(robot, path, s_time):
         angles_in_degrees = joint_angles * (180 / np.pi)
         # Assuming Arm_Device is instantiated and the function Arm_serial_servo_write6 is available
         # to send the joint angles to the robot. Replace 'Arm_Device' with your actual object.
-        robot.Arm_serial_servo_write6(angles_in_degrees[0], angles_in_degrees[1], angles_in_degrees[2], angles_in_degrees[3], angles_in_degrees[4], 90, s_time)
+        robot.Arm_serial_servo_write6(angles_in_degrees[0], angles_in_degrees[1], angles_in_degrees[2],
+                                      angles_in_degrees[3], angles_in_degrees[4], 90, s_time)
         time.sleep(0.1)  # Wait for some time interval before sending the next set of angles
 
 
@@ -87,6 +89,35 @@ def evaluate_path_following_error(robot, desired_path):
     return error_path
 
 
+def path_planner(robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper, s_time):
+    # Define your start and end angles here (in radians)
+    q_initial_guess = np.random.rand(5, 1)*2*math.pi
+    q_0 = invkin(robot, R_cur, P_cur, q_initial_guess)
+
+    q_initial_guess = np.random.rand(5, 1)*2*math.pi
+    q_dest = invkin(robot, R_dest, P_dest, q_initial_guess)
+
+    start_angles = np.array(q_0) * np.pi / 180
+    end_angles = np.array(q_dest) * np.pi / 180
+    steps = N  # Define the number of steps you want in the path
+
+    pid_controllers = [PIDController(k_p, k_i, k_d) for _ in range(N)]
+
+    # Generate the path
+    joint_space_path = generate_joint_space_path(start_angles, end_angles, steps)
+
+    # Command the arm to follow the path
+    command_arm_to_follow_path_with_feedback(robot, joint_space_path, s_time, pid_controllers, gripper)
+
+    # Measure the error
+    path_following_error = evaluate_path_following_error(robot, joint_space_path)
+
+    # Print or process the error as needed
+    print("Path following errors:")
+    print(path_following_error)
+
+
+"""
 def path_planner(robot, N, q_0, q_dest, k_p, k_i, k_d, gripper, s_time):
     # Define your start and end angles here (in radians)
     start_angles = np.array(q_0) * np.pi / 180
@@ -107,3 +138,4 @@ def path_planner(robot, N, q_0, q_dest, k_p, k_i, k_d, gripper, s_time):
     # Print or process the error as needed
     print("Path following errors:")
     print(path_following_error)
+"""
