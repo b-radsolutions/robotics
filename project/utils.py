@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 def get_homogeneous(R, T):
     """returns the homogeneous representation (H) given R and T
@@ -25,29 +25,50 @@ def vec_to_so3(V):
                      [V[2], 0, -V[0]],
                      [-V[1], V[0], 0]])
 
-
-def euler_rodrigues(axis, angle):
-    """Returns a 3x3 matrix that represents a rotation 
-    around the axis by theta
-    Args: 
-        axis: 3x1 defining axis rotation
-        theta: angle of rotation
-
+def hat(k):
     """
-    # Normalize the axis
-    axis = (axis) / np.linalg.norm(axis)
+    Returns a 3 x 3 cross product matrix for a 3 x 1 vector
+    
+             [  0 -k3  k2]
+     khat =  [ k3   0 -k1]
+             [-k2  k1   0]
+    
+    :type    k: numpy.array
+    :param   k: 3 x 1 vector
+    :rtype:  numpy.array
+    :return: the 3 x 3 cross product matrix    
+    """
+    
+    khat=np.zeros((3,3))
+    khat[0,1]=-k[2]
+    khat[0,2]=k[1]
+    khat[1,0]=k[2]
+    khat[1,2]=-k[0]
+    khat[2,0]=-k[1]
+    khat[2,1]=k[0]    
+    return khat
 
-    # Compute the necessary components
-    a = np.cos(angle / 2.0)
-    b, c, d = -axis * np.sin(angle / 2.0)
 
-    # Compute the rotation matrix
-    rotation_matrix = np.array([[a ** 2 + b ** 2 - c ** 2 - d ** 2, 2 * (b * c - a * d), 2 * (b * d + a * c)],
-                                [2 * (b * c + a * d), a ** 2 + c ** 2 - b ** 2 - d ** 2, 2 * (c * d - a * b)],
-                                [2 * (b * d - a * c), 2 * (c * d + a * b), a ** 2 + d ** 2 - b ** 2 - c ** 2]])
-
-    return rotation_matrix
-
+def rot(k, theta):
+    """
+    Generates a 3 x 3 rotation matrix from a unit 3 x 1 unit vector axis
+    and an angle in radians using the Euler-Rodrigues formula
+    
+        R = I + sin(theta)*hat(k) + (1 - cos(theta))*hat(k)^2
+        
+    :type    k: numpy.array
+    :param   k: 3 x 1 unit vector axis
+    :type    theta: number
+    :param   theta: rotation about k in radians
+    :rtype:  numpy.array
+    :return: the 3 x 3 rotation matrix 
+        
+    """
+    I = np.identity(3)
+    khat = hat(k)
+    khat2 = khat.dot(khat)
+    return I + math.sin(theta)*khat + (1.0 - math.cos(theta))*khat2
+    
 
 def invhat(khat):
     return np.array([(-khat[1, 2] + khat[2, 1]), (khat[0, 2] - khat[2, 0]), (-khat[0, 1] + khat[1, 0])]) / 2
