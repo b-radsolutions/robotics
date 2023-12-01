@@ -28,7 +28,7 @@ class UR5Arm:
         """
         return self.H
 
-    def get_Limits(self)->list:
+    def get_Limits(self) -> list:
         """Returns the joint limits in a list of tuples length: 6 (including gripper)
         """
         return self.L
@@ -38,9 +38,9 @@ class UR5Arm:
         joint (i) in the ith frame
         """
         joint_angles = jt
-        if joint_angles.shape == (5,1):
+        if joint_angles.shape == (5, 1):
             joint_angles = jt.T
-       
+
         # assert(joint_angles.shape == (1,5))
         P = self.P
         H = self.H
@@ -51,13 +51,13 @@ class UR5Arm:
             R = R @ rot(H[:,i-1], joint_angles[i-1])
             PiT[:,i] = P[:,i] + R @ PiT[:,i]
         return PiT
-        
-    def jacobian(self, jt)->np.array:
+
+    def jacobian(self, jt) -> np.array:
         """Returns the jacobian of this robot arm with joint angles
         """
         joint_angles = np.squeeze(jt.reshape(1,5))
         # assert (len(joint_angles) == self.H.shape[1], 
-                # "number of joint angles is greater than number of non-end-effector joint")
+        # "number of joint angles is greater than number of non-end-effector joint")
         # The Jacobian is defined as 
         """ 
         # J = [[ h_1,        h_1 x R01 @ P1T                ] 
@@ -67,7 +67,7 @@ class UR5Arm:
         #      [ .                                          ]
         #      [ R0,N-1 @ h_N,  (R0,N-1 @ h_N) x R0,N @ PNT,]].T
         """
-        J = np.zeros((6,5))
+        J = np.zeros((6, 5))
         PiT = self.get_PiT(joint_angles)
         H = self.H
         R = np.eye(3)
@@ -78,8 +78,3 @@ class UR5Arm:
             dv = hat(dw) @ R @ PiT[:,i+1]
             J[:,i] = np.concatenate((dw.T, dv.T), axis=0).T
         return J
-        
-            
-            
-            
-            
