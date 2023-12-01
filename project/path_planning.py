@@ -1,6 +1,5 @@
-from fwdkin import fwdkin_no_homo
-from utils import *
-from Robot import UR5Arm
+from project.utils import *
+from project.Robot import UR5Arm
 import numpy as np
 import time
 
@@ -50,7 +49,7 @@ def command_arm_to_follow_path(robot, path, s_time):
         time.sleep(s_time)  # Wait for some time interval before sending the next set of angles
 
 
-def command_arm_to_follow_path_with_feedback(robot, path, s_time, pid_controllers):
+def command_arm_to_follow_path_with_feedback(robot, path, s_time, pid_controllers, gripper):
     for joint_angles in path:
         actual_joint_angles = measure_actual_position(robot)
         error = joint_angles - actual_joint_angles
@@ -62,7 +61,7 @@ def command_arm_to_follow_path_with_feedback(robot, path, s_time, pid_controller
             adjusted_angles.append(joint_angles[i] + adjustment)
 
         angles_in_degrees = np.array(adjusted_angles) * (180 / np.pi)
-        robot.Arm_serial_servo_write6(*angles_in_degrees, 90, 1500)
+        robot.Arm_serial_servo_write6(*angles_in_degrees, gripper, 1500)
         time.sleep(dt)
 
 
@@ -139,7 +138,7 @@ def return_pd(rotations, points):
     return pd
 
 
-def path_planner(q_0, q_dest, k_p, k_i, k_d):
+def path_planner(N, q_0, q_dest, k_p, k_i, k_d, gripper):
     s_time = 1500  # milliseconds
     ex = np.array([1, 0, 0])
     ey = np.array([0, 1, 0])
@@ -171,15 +170,15 @@ def path_planner(q_0, q_dest, k_p, k_i, k_d):
     # Define your start and end angles here (in radians)
     start_angles = np.array(q_0) * np.pi / 180
     end_angles = np.array(q_dest) * np.pi / 180
-    steps = 5  # Define the number of steps you want in the path
+    steps = N  # Define the number of steps you want in the path
 
-    pid_controllers = [PIDController(k_p, k_i, k_d) for _ in range(5)]
+    pid_controllers = [PIDController(k_p, k_i, k_d) for _ in range(N)]
 
     # Generate the path
     joint_space_path = generate_joint_space_path(start_angles, end_angles, steps)
 
     # Command the arm to follow the path
-    command_arm_to_follow_path_with_feedback(robot, joint_space_path, s_time, pid_controllers)
+    command_arm_to_follow_path_with_feedback(robot, joint_space_path, s_time, pid_controllers, gripper)
 
     # Measure the error
     path_following_error = evaluate_path_following_error(robot, joint_space_path)
@@ -187,10 +186,3 @@ def path_planner(q_0, q_dest, k_p, k_i, k_d):
     # Print or process the error as needed
     print("Path following errors:")
     print(path_following_error)
-
-
-start = [90, 90, 90, 90, 90]
-end = [45, 135, 90, -30, 180]
-
-path_planner(start, end, 0.0000001, 0.00000001, 0.00000001)
-print("passed Path Following")
