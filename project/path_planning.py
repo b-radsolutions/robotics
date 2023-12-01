@@ -92,13 +92,16 @@ def evaluate_path_following_error(robot, desired_path):
 def path_planner(robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper, s_time):
     # Define your start and end angles here (in radians)
     q_initial_guess = np.random.rand(5, 1)*2*math.pi
-    q_0 = invkin(robot, R_cur, P_cur, q_initial_guess)
+    q_0 = invkin(robot, R_cur, P_cur, q_initial_guess) % (2*np.pi)
 
     q_initial_guess = np.random.rand(5, 1)*2*math.pi
-    q_dest = invkin(robot, R_dest, P_dest, q_initial_guess)
+    q_dest = invkin(robot, R_dest, P_dest, q_initial_guess) % (2*np.pi)
 
-    start_angles = np.array(q_0) * np.pi / 180
-    end_angles = np.array(q_dest) * np.pi / 180
+    assert (np.abs(q_0).all() < 2*math.pi)
+    assert (np.abs(q_dest).all() < 2*math.pi)
+
+    start_angles = np.array(q_0)
+    end_angles = np.array(q_dest)
     steps = N  # Define the number of steps you want in the path
 
     pid_controllers = [PIDController(k_p, k_i, k_d) for _ in range(N)]
