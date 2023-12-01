@@ -72,7 +72,6 @@ def measure_actual_position(robot):
         else:
             time.sleep(0.1)
             joint_angles.append(0)
-    print(joint_angles)
     # Convert the servo positions to angles, if necessary
     # joint_angles = [convert_position_to_angle(pos) for pos in joint_angles]
     time.sleep(0.1)
@@ -89,22 +88,21 @@ def evaluate_path_following_error(robot, desired_path):
     return error_path
 
 
-def path_planner(real_robot, virtual_robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper=6, s_time=500):
+def path_planner(real_robot, virtual_robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper, s_time):
     # Define your start and end angles here (in radians)
     q_initial_guess = np.array([50,50,50,50,50])[None].T*math.pi/180
 #     q_initial_guess = np.random.rand(5, 1)*math.pi/180
     conv = False
     while conv!=True:
         conv, q_0 = invkin(virtual_robot, R_cur, P_cur, q_initial_guess)
-    q_0 = q_0 % (2*np.pi)
-    print(f"q_0 converged")
+    q_0 = (q_0 % (2*np.pi)).flatten()
 
 #     q_initial_guess = np.random.rand(5, 1)*math.pi/180
     q_initial_guess = np.array([50,50,50,50,50])[None].T*math.pi/180
     conv = False
     while conv!=True:
         conv, q_dest = invkin(virtual_robot, R_dest, P_dest, q_initial_guess)
-    q_dest = q_dest % (2*np.pi)
+    q_dest = (q_dest % (2*np.pi)).flatten()
 
     assert (np.abs(q_0).all() < 2*math.pi)
     assert (np.abs(q_dest).all() < 2*math.pi)
