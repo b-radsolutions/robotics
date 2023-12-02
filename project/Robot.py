@@ -1,6 +1,6 @@
 import numpy as np
-import utils
 from utils import rot, hat
+
 
 class UR5Arm:
     def __init__(self, P, H, limits=None):
@@ -45,17 +45,17 @@ class UR5Arm:
         P = self.P
         H = self.H
         R = np.eye(3)
-        PiT = np.zeros((3,6))
-        PiT[:,-1] = P[:,-1]
+        PiT = np.zeros((3, 6))
+        PiT[:, -1] = P[:, -1]
         for i in range(5, 0, -1):
-            R = R @ rot(H[:,i-1], joint_angles[i-1])
-            PiT[:,i] = P[:,i] + R @ PiT[:,i]
+            R = R @ rot(H[:, i - 1], joint_angles[i - 1])
+            PiT[:, i] = P[:, i] + R @ PiT[:, i]
         return PiT
 
     def jacobian(self, jt) -> np.array:
         """Returns the jacobian of this robot arm with joint angles
         """
-        joint_angles = np.squeeze(jt.reshape(1,5))
+        joint_angles = np.squeeze(jt.reshape(1, 5))
         # assert (len(joint_angles) == self.H.shape[1], 
         # "number of joint angles is greater than number of non-end-effector joint")
         # The Jacobian is defined as 
@@ -75,6 +75,6 @@ class UR5Arm:
             dw = R @ H[:, i]
             R = R @ rot(H[:, i], joint_angles[i])
             # print(R)
-            dv = hat(dw) @ R @ PiT[:,i+1]
-            J[:,i] = np.concatenate((dw.T, dv.T), axis=0).T
+            dv = hat(dw) @ R @ PiT[:, i + 1]
+            J[:, i] = np.concatenate((dw.T, dv.T), axis=0).T
         return J

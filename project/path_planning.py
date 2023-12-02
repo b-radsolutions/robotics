@@ -1,5 +1,4 @@
 from utils import *
-from Robot import UR5Arm
 import numpy as np
 import time
 from invkin import invkin
@@ -35,14 +34,14 @@ def generate_joint_space_path(start_angles, end_angles, steps):
 
 
 # Step 2: Command the arm to follow the path
-def command_arm_to_follow_path(robot, path, s_time):
+def command_arm_to_follow_path(robot, path, s_time, gripper):
     for joint_angles in path:
         # Convert angles from radians to degrees for the robot's actuators
         angles_in_degrees = joint_angles * (180 / np.pi)
         # Assuming Arm_Device is instantiated and the function Arm_serial_servo_write6 is available
         # to send the joint angles to the robot. Replace 'Arm_Device' with your actual object.
         robot.Arm_serial_servo_write6(angles_in_degrees[0], angles_in_degrees[1], angles_in_degrees[2],
-                                      angles_in_degrees[3], angles_in_degrees[4], 90, s_time)
+                                      angles_in_degrees[3], angles_in_degrees[4], gripper, s_time)
         time.sleep(0.1)  # Wait for some time interval before sending the next set of angles
 
 
@@ -88,24 +87,24 @@ def evaluate_path_following_error(robot, desired_path):
     return error_path
 
 
-def path_planner(real_robot, virtual_robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper, s_time):
+def path_planner(real_robot, virtual_robot, N, R_cur, P_cur, R_dest, P_dest, k_p, k_i, k_d, gripper, s_time, feedback):
     # Define your start and end angles here (in radians)
-    q_initial_guess = np.array([50,50,50,50,50])[None].T*math.pi/180
-#     q_initial_guess = np.random.rand(5, 1)*math.pi/180
+    q_initial_guess = np.array([50, 50, 50, 50, 50])[None].T * math.pi / 180
+    #     q_initial_guess = np.random.rand(5, 1)*math.pi/180
     conv = False
-    while conv!=True:
+    while conv != True:
         conv, q_0 = invkin(virtual_robot, R_cur, P_cur, q_initial_guess)
-    q_0 = (q_0 % (2*np.pi)).flatten()
+    q_0 = (q_0 % (2 * np.pi)).flatten()
 
-#     q_initial_guess = np.random.rand(5, 1)*math.pi/180
-    q_initial_guess = np.array([50,50,50,50,50])[None].T*math.pi/180
+    #     q_initial_guess = np.random.rand(5, 1)*math.pi/180
+    q_initial_guess = np.array([50, 50, 50, 50, 50])[None].T * math.pi / 180
     conv = False
-    while conv!=True:
+    while conv != True:
         conv, q_dest = invkin(virtual_robot, R_dest, P_dest, q_initial_guess)
-    q_dest = (q_dest % (2*np.pi)).flatten()
+    q_dest = (q_dest % (2 * np.pi)).flatten()
 
-    assert (np.abs(q_0).all() < 2*math.pi)
-    assert (np.abs(q_dest).all() < 2*math.pi)
+    assert (np.abs(q_0).all() < 2 * math.pi)
+    assert (np.abs(q_dest).all() < 2 * math.pi)
 
     start_angles = np.array(q_0)
     end_angles = np.array(q_dest)
@@ -117,7 +116,10 @@ def path_planner(real_robot, virtual_robot, N, R_cur, P_cur, R_dest, P_dest, k_p
     joint_space_path = generate_joint_space_path(start_angles, end_angles, steps)
 
     # Command the arm to follow the path
-    command_arm_to_follow_path_with_feedback(real_robot, joint_space_path, s_time, pid_controllers, gripper)
+    if feedback:
+        command_arm_to_follow_path_with_feedback(real_robot, joint_space_path, s_time, pid_controllers, gripper)
+    else:
+        command_arm_to_follow_path(real_robot, joint_space_path, s_time, gripper)
 
     # Measure the error
     path_following_error = evaluate_path_following_error(real_robot, joint_space_path)

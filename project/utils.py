@@ -1,6 +1,7 @@
 import numpy as np
 import math
 
+
 def get_homogeneous(R, T):
     """returns the homogeneous representation (H) given R and T
     Args: 
@@ -25,6 +26,7 @@ def vec_to_so3(V):
                      [V[2], 0, -V[0]],
                      [-V[1], V[0], 0]])
 
+
 def hat(k):
     """
     Returns a 3 x 3 cross product matrix for a 3 x 1 vector
@@ -38,14 +40,14 @@ def hat(k):
     :rtype:  numpy.array
     :return: the 3 x 3 cross product matrix    
     """
-    
-    khat=np.zeros((3,3))
-    khat[0,1]=-k[2]
-    khat[0,2]=k[1]
-    khat[1,0]=k[2]
-    khat[1,2]=-k[0]
-    khat[2,0]=-k[1]
-    khat[2,1]=k[0]    
+
+    khat = np.zeros((3, 3))
+    khat[0, 1] = -k[2]
+    khat[0, 2] = k[1]
+    khat[1, 0] = k[2]
+    khat[1, 2] = -k[0]
+    khat[2, 0] = -k[1]
+    khat[2, 1] = k[0]
     return khat
 
 
@@ -67,8 +69,8 @@ def rot(k, theta):
     I = np.identity(3)
     khat = hat(k)
     khat2 = khat.dot(khat)
-    return I + math.sin(theta)*khat + (1.0 - math.cos(theta))*khat2
-    
+    return I + math.sin(theta) * khat + (1.0 - math.cos(theta)) * khat2
+
 
 def invhat(khat):
     return np.array([(-khat[1, 2] + khat[2, 1]), (khat[0, 2] - khat[2, 0]), (-khat[0, 1] + khat[1, 0])]) / 2
@@ -115,11 +117,12 @@ def R2rot(R):
     k = invhat(R1) / (2.0 * sin_theta)
     return k, theta
 
+
 def R2rpy(R):
-    assert np.linalg.norm(R[0:2,0]) > np.finfo(float).eps * 10.0, "Singular rpy requested"
-    
-    r=np.arctan2(R[2,1],R[2,2])
-    y=np.arctan2(R[1,0], R[0,0])
-    p=np.arctan2(-R[2,0], np.linalg.norm(R[2,1:3]))
-        
-    return (r,p,y)    
+    assert np.linalg.norm(R[0:2, 0]) > np.finfo(float).eps * 10.0, "Singular rpy requested"
+
+    r = np.arctan2(R[2, 1], R[2, 2])
+    y = np.arctan2(R[1, 0], R[0, 0])
+    p = np.arctan2(-R[2, 0], np.linalg.norm(R[2, 1:3]))
+
+    return r, p, y
